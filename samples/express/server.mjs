@@ -520,6 +520,35 @@ const IS_DEV = process.env.NODE_ENV !== "production";
 
 app.use(express.static("public", { etag: !IS_DEV }));
 
+// The signer demo runs MediaPipe's vision tasks in the browser. Its ~35 MB of
+// WebAssembly is served straight out of node_modules rather than copied into
+// public/ — a copy would double the bytes on disk and go stale the next time
+// the package is upgraded. Serving it locally instead of from a CDN is the
+// point of the demo: no camera frame, and no landmark derived from one, ever
+// leaves the device.
+app.use(
+  "/vendor/tasks-vision",
+  express.static("node_modules/@mediapipe/tasks-vision", { etag: !IS_DEV }),
+);
+
+// The signer demo also runs an ASL sign classifier (TFLite) in the browser.
+// Served from node_modules for the same reasons as above, and because
+// tfjs-tflite otherwise fetches its WebAssembly from a CDN — which would put a
+// third-party host in the middle of a recognition path whose whole point is
+// that it stays on the device.
+app.use(
+  "/vendor/tfjs-tflite",
+  express.static("node_modules/@tensorflow/tfjs-tflite", { etag: !IS_DEV }),
+);
+app.use(
+  "/vendor/tfjs-core",
+  express.static("node_modules/@tensorflow/tfjs-core", { etag: !IS_DEV }),
+);
+app.use(
+  "/vendor/tfjs-backend-cpu",
+  express.static("node_modules/@tensorflow/tfjs-backend-cpu", { etag: !IS_DEV }),
+);
+
 // The knowledge upload route needs a larger JSON body than the 100 KB default,
 // and body-parser is a no-op once a body has already been parsed, so its parser
 // must run before the global one. Mounting it by path lets Express match it the

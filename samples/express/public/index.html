@@ -90,6 +90,21 @@
           back here.
         </span>
       </li>
+      <li>
+        <a href="demos/signer/">Signer</a>
+        <span class="badge">ASL</span> —
+        <strong>the SDK used in reverse.</strong> A Deaf signer signs to the
+        camera, the browser recognizes it on-device, and the avatar says the
+        sentence aloud to a hearing listener. Recognition is fully offline
+        (MediaPipe Holistic + DTW) and no video ever leaves the machine; Connect
+        does the half it is good at &mdash; speaking, with a face. Nothing
+        beyond <code>present()</code> is billed.
+        <span class="prereq">
+          <strong>Record signs first.</strong> The vocabulary is recorded by the
+          user, so open the demo, record a few signs 3&ndash;5 times each under
+          <em>Record signs</em>, then switch to <em>Recognize</em>.
+        </span>
+      </li>
     </ul>
     <!-- The one thing this page checks. Embed consumes a chatbot; Studio is
          where you make one, and a brand-new organization has none — so without

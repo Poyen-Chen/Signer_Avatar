@@ -11,9 +11,14 @@
     "predev": "node scripts/check-env.mjs",
     "prestart": "node scripts/check-env.mjs",
     "start": "node --env-file=.env server.mjs",
-    "dev": "node --env-file=.env --watch server.mjs"
+    "dev": "node --env-file=.env --watch server.mjs",
+    "fetch:signer-model": "node scripts/fetch-signer-model.mjs"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^1.0.1",
+    "@tensorflow/tfjs-backend-cpu": "^4.9.0",
+    "@tensorflow/tfjs-core": "^4.9.0",
+    "@tensorflow/tfjs-tflite": "^0.0.1-alpha.10",
     "express": "^4.21.2"
   },
   "devDependencies": {
