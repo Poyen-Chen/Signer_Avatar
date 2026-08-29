@@ -399,7 +399,7 @@ async function startTracking() {
     cameraPlaceholder.hidden = true;
     state.tracking = true;
     if (state.presenterReady) presenter.setListening?.(true);
-    setStatus("Recognizing", "ok");
+    setStatus("Watching for gestures", "ok");
     startRenderLoop();
   } catch (err) {
     cameraBtn.disabled = false;
@@ -566,7 +566,10 @@ function onSegment({ frames, reason }) {
 
   const verdict = classify(normalized, templates);
   logRecognition(verdict, frames.length, reason);
-  if (!verdict.label) return;
+  if (!verdict.label) {
+    askToRepeat(verdict);
+    return;
+  }
 
   addGloss(verdict.label);
 }
@@ -588,11 +591,46 @@ function logRecognition(verdict, frameCountIn, reason) {
     li.textContent = `${verdict.label} \u00b7 d=${verdict.distance.toFixed(2)} \u00b7 runner-up ${verdict.runnerUp ?? "\u2014"} ${verdict.runnerUpDistance === Infinity ? "" : verdict.runnerUpDistance.toFixed(2)} \u00b7 ${frameCountIn}f`;
   } else {
     li.className = "miss";
-    const why = { "too-far": "nothing close", ambiguous: "two signs too alike", "no-templates": "no vocabulary" }[verdict.reason] ?? verdict.reason;
+    const why = { "too-far": "nothing close", ambiguous: "two gestures too alike", "no-templates": "nothing taught yet" }[verdict.reason] ?? verdict.reason;
     li.textContent = `no match (${why}) \u00b7 nearest ${verdict.ranking[0]?.label ?? "\u2014"} d=${verdict.distance === Infinity ? "\u221e" : verdict.distance.toFixed(2)} \u00b7 ${frameCountIn}f \u00b7 ${reason}`;
   }
   recognitionLog.prepend(li);
   while (recognitionLog.childElementCount > 50) recognitionLog.lastElementChild.remove();
+}
+
+// ── Missed gesture ───────────────────────────────────────────────────────
+
+/** Not before this long since the last ask, so a run of misses is one ask. */
+const REPEAT_ASK_COOLDOWN_MS = 6000;
+let lastRepeatAsk = 0;
+
+/**
+ * When a gesture is not recognized, the avatar says so.
+ *
+ * For a mute user the avatar is their voice, so it asking "could you do that
+ * again?" is the user asking — in character, and nothing a listener would find
+ * odd. The alternative, silence, leaves the signer standing there with no idea
+ * whether anything happened, and a listener with no idea they were being
+ * addressed. A wrong guess spoken aloud would be worse than either.
+ */
+function askToRepeat(verdict) {
+  const now = performance.now();
+  if (now - lastRepeatAsk < REPEAT_ASK_COOLDOWN_MS) return;
+  // "no-templates" is a setup state, not a missed gesture; there is nothing to
+  // repeat until something has been recorded.
+  if (verdict.reason === "no-templates") return;
+  if (!state.presenterReady || state.isSpeaking) return;
+  lastRepeatAsk = now;
+
+  const nearest = verdict.ranking[0]?.label;
+  // If it nearly matched something, say what, so a listener hears the likely
+  // meaning even while the signer redoes it.
+  const line =
+    verdict.reason === "ambiguous" && nearest
+      ? `Sorry, I didn't quite catch that. Was it "${nearest}"? Let me try again.`
+      : "Sorry, I didn't catch that. Let me try again.";
+  setStatus("Didn't catch that \u2014 sign it again.", "warn");
+  presenter.present(line, { emotion: "embarrassment", intensity: "low" });
 }
 
 // ── Gloss buffer ─────────────────────────────────────────────────────────
@@ -614,7 +652,7 @@ function renderGlosses() {
     glossStrip.replaceChildren(
       Object.assign(document.createElement("span"), {
         className: "hint",
-        textContent: "Sign a word \u2014 what is recognized appears here.",
+        textContent: "Make a gesture \u2014 what it says appears here.",
       }),
     );
     sentencePreview.textContent = "";
@@ -746,14 +784,14 @@ armBtn.addEventListener("click", () => {
     return;
   }
   if (!wordInput.value.trim()) {
-    recordHint.textContent = "Type the sign to record first.";
+    recordHint.textContent = "Type what the gesture should say first.";
     wordInput.focus();
     return;
   }
   state.armed = !state.armed;
   armBtn.classList.toggle("is-armed", state.armed);
   armBtn.textContent = state.armed ? "Cancel" : "Record next take";
-  recordHint.textContent = state.armed ? "Start signing — it saves itself when you stop." : "";
+  recordHint.textContent = state.armed ? "Make the gesture — it saves itself when you stop." : "";
 });
 
 function renderWordList() {
@@ -761,7 +799,7 @@ function renderWordList() {
   vocabSummary.textContent =
     labels.length === 0
       ? "No signs yet — record some under Record signs."
-      : `${labels.length} signs \u00b7 ${vocab.size()} takes`;
+      : `${labels.length} gestures \u00b7 ${vocab.size()} takes`;
 
   wordList.replaceChildren(
     ...labels.map((label) => {
@@ -824,7 +862,7 @@ importFile.addEventListener("change", async () => {
       for (const t of loaded.samples(label)) vocab.add(label, t.frames);
     }
     const saved = vocab.save();
-    recordHint.textContent = saved.ok ? `Imported ${loaded.labels().length} signs.` : saved.error;
+    recordHint.textContent = saved.ok ? `Imported ${loaded.labels().length} gestures.` : saved.error;
     renderWordList();
   } catch (err) {
     recordHint.textContent = `Import failed: ${err.message}`;
@@ -833,11 +871,11 @@ importFile.addEventListener("change", async () => {
 });
 
 clearVocabBtn.addEventListener("click", () => {
-  if (!confirm("Delete every recorded sign? Export first if you want them back.")) return;
+  if (!confirm("Delete every recorded gesture? Export first if you want them back.")) return;
   for (const label of vocab.labels()) vocab.removeWord(label);
   Vocabulary.clearStored();
   renderWordList();
-  recordHint.textContent = "All signs deleted.";
+  recordHint.textContent = "All gestures deleted.";
 });
 
 // ── Bootstrap ────────────────────────────────────────────────────────────
