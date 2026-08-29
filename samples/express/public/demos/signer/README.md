@@ -1,7 +1,13 @@
-# Signer — ASL to speech
+# Signer — your gestures, spoken
 
-A Deaf signer signs to the camera; the browser recognizes the signs on-device;
-a Perxona avatar says the sentence aloud to a hearing listener.
+A person who can hear but cannot speak makes a gesture of their own to the
+camera; the browser recognizes it on-device; a Perxona avatar says the sentence
+they taught it, aloud, with a matching expression and body gesture.
+
+The gestures are **the user's own**, not sign language. Most hearing mute people
+(laryngectomy, ALS, cerebral palsy) do not sign, and should not have to learn a
+language to get a voice — any distinct movement, three takes, and it speaks.
+The ASL vocabulary offered in the picker is a suggestion list, nothing more.
 
 ## Why this direction
 
