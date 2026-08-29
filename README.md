@@ -88,6 +88,81 @@ Needs Node ≥ 22, Chrome, a webcam, and a [Perxona Console](https://console.per
 account (asia region) for the avatar. Recognition itself needs no account and no
 network.
 
+## How it works
+
+```mermaid
+flowchart LR
+    subgraph device["On this device (browser) — nothing leaves"]
+        direction LR
+        CAM["📷 Camera"] --> MP["MediaPipe Holistic<br/><small>pose 33 · hands 21×2 · WASM, 30 fps</small>"]
+        MP --> FE["features.js<br/><small>128-dim, body-relative</small>"]
+        FE --> SEG["segment.js<br/><small>adaptive energy threshold</small>"]
+        SEG --> DTW["dtw.js<br/><small>match vs. your own takes</small>"]
+        VOC[("vocab.js<br/><small>localStorage</small>")] -.-> DTW
+        DTW --> SEN["sentence.js<br/><small>gesture → sentence</small>"]
+        SEN --> MOT["motions.js<br/><small>meaning → intent tag → motion</small>"]
+    end
+    MOT -->|"present(text, emotion)<br/>playMotion(id)"| AV["🗣 Perxona avatar<br/><small>&lt;sv-presenter&gt;</small>"]
+    EX["Express server<br/><small>secret key · serves model + WASM</small>"] -.->|"publishable key"| AV
+```
+
+The only thing that crosses the device boundary is the finished sentence, handed
+to the avatar to speak. Video and landmarks stay in the browser; the model and
+MediaPipe's WebAssembly are served from `localhost`, not a CDN.
+
+| Stage | Tool | Why this one |
+|---|---|---|
+| Landmarks | MediaPipe Holistic | Open source, runs in the browser, no upload |
+| Features | `features.js` | Handshape relative to the wrist, location relative to the shoulders — so distance from the camera and body size cancel out |
+| Segmentation | `segment.js` | Thresholds are multiples of a measured noise floor (open at 2.0×, close at 1.65×), not absolute values, so they survive a change of camera or lighting |
+| Recognition | DTW nearest-neighbour | **No training data.** It compares a gesture against the takes you recorded and absorbs the speed variation that breaks frame-by-frame comparison. Rejects on distance *and* on a thin margin over the runner-up — a wrong word gets spoken aloud on the user's behalf, so silence beats a guess |
+| Gesture → motion | `motions.js` | Perxona's motion catalog carries `intent:` tags (greeting, apology, confusion…); the sentence is looked up against them so the body matches the words |
+| Speech + face | Perxona Connect `<sv-presenter>` | `present()` for voice, lip-sync and expression; `playMotion()` for the body, independent of the speech queue so short sentences still get a full gesture |
+
+Because recognition needs no dataset, teaching a new gesture is three takes and
+about thirty seconds.
+
+### Why the ASL tools could not be used
+
+Three routes were tried; each stalled at a different point.
+
+**1. The pre-trained ASL model — stalled at the browser runtime.**
+[`sign/kaggle-asl-signs-1st-place`](https://huggingface.co/sign/kaggle-asl-signs-1st-place)
+(250 signs, MIT, 11 MB, MediaPipe landmarks in) is the ideal model and it loads:
+250 classes in 127 ms. The problem is running it. `@tensorflow/tfjs-tflite` is
+the only way to run a `.tflite` in a browser, has been at `0.0.1-alpha.10` since
+2023, and exposes no way to resize an input tensor — so the interpreter is stuck
+at the placeholder `[1, 543, 3]`, and the graph aborts even there because it
+wants a variable-length sequence. The fix is converting to ONNX for
+`onnxruntime-web`; the wiring is kept in `asl.js`.
+
+**2. Public ASL datasets as a seed vocabulary — stalled at cross-signer accuracy.**
+[`scripts/build-seed-vocabulary.mjs`](samples/express/scripts/build-seed-vocabulary.mjs)
+converts WLASL landmark sequences into this app's template format, through the
+same `features.js` the live path uses. Measured on 16 signs × 5 takes from
+different signers: same-sign distance 0.42, different-sign 0.65, and **~50%
+precision when it speaks** at every rejection threshold. The signal is real
+(seven times chance) but the limit is structural — DTW matches against
+examples, and between-signer variation exceeds between-sign variation. Crossing
+signers is what a trained model is for, which is route 1 again.
+
+**3. A Korean model — stalled at missing documentation.**
+`gyann/edge-sign-ksl-mediapipe` (2,771 signs) packs 137 OpenPose-convention
+keypoints into 959 undocumented dimensions. Recovering the layout from its
+published normalization stats produced scatter, not a skeleton. A wrong guess
+there does not error; it returns a confident wrong word.
+
+### Why that is not a problem for this product
+
+All three routes fail on the same requirement: recognizing *everyone's* signs.
+Signer does not need that. Its users hear but cannot speak; most do not sign and
+should not have to learn a language to get a voice. Each person teaches their own
+gestures and the system only ever has to recognize *that one person* — the exact
+situation DTW is best at. Cross-signer accuracy of 42% is fatal for a sign
+translation app and irrelevant here, because nobody performs anyone else's
+gesture. That is not a coincidence: it is the direct result of positioning the
+product as personal gestures rather than sign language.
+
 ## What is honest about it
 
 - Recognition matches against the user's own recordings, so it is good for the

@@ -75,6 +75,69 @@ npm run dev                 # http://localhost:8083/demos/signer/
 需要 Node ≥ 22、Chrome、攝影機，以及一個 [Perxona Console](https://console.perxona.ai)
 帳號（asia 區）供 avatar 使用。辨識本身不需要帳號、不需要網路。
 
+## 運作方式
+
+```mermaid
+flowchart LR
+    subgraph device["On this device (browser) — nothing leaves"]
+        direction LR
+        CAM["📷 Camera"] --> MP["MediaPipe Holistic<br/><small>pose 33 · hands 21×2 · WASM, 30 fps</small>"]
+        MP --> FE["features.js<br/><small>128-dim, body-relative</small>"]
+        FE --> SEG["segment.js<br/><small>adaptive energy threshold</small>"]
+        SEG --> DTW["dtw.js<br/><small>match vs. your own takes</small>"]
+        VOC[("vocab.js<br/><small>localStorage</small>")] -.-> DTW
+        DTW --> SEN["sentence.js<br/><small>gesture → sentence</small>"]
+        SEN --> MOT["motions.js<br/><small>meaning → intent tag → motion</small>"]
+    end
+    MOT -->|"present(text, emotion)<br/>playMotion(id)"| AV["🗣 Perxona avatar<br/><small>&lt;sv-presenter&gt;</small>"]
+    EX["Express server<br/><small>secret key · serves model + WASM</small>"] -.->|"publishable key"| AV
+```
+
+唯一離開裝置的東西是那句已經翻好的話，交給 avatar 唸。影像和骨架都留在瀏覽器；
+模型和 MediaPipe 的 WebAssembly 從 `localhost` 提供，不走 CDN。
+
+| 階段 | 工具 | 為什麼選它 |
+|---|---|---|
+| 骨架 | MediaPipe Holistic | 開源、跑在瀏覽器、不用上傳影像 |
+| 特徵 | `features.js` | 手形相對手腕、位置相對肩膀 —— 離鏡頭多遠、身材多大都抵消掉 |
+| 分段 | `segment.js` | 門檻是量測到的噪訊底線的倍數（2.0× 開始、1.65× 結束），不是絕對值，換攝影機或燈光都還能用 |
+| 辨識 | DTW 最近鄰 | **不需要訓練資料。**拿手勢跟你錄的樣本比對，能吸收逐格比對會失效的速度差異。距離太遠拒識、跟次選太接近也拒識 —— 錯字會用使用者的名義大聲講出來，寧可沉默也不猜 |
+| 手勢 → 動作 | `motions.js` | Perxona 動作庫帶 `intent:` 標籤（greeting、apology、confusion…），拿句子去查，讓身體跟嘴巴說的一致 |
+| 語音 + 表情 | Perxona Connect `<sv-presenter>` | `present()` 負責聲音、口型、表情；`playMotion()` 負責身體，獨立於語音佇列，短句也放得完整個動作 |
+
+因為辨識不需要資料集，教一個新手勢就是錄三次、大約三十秒。
+
+### 為什麼美國手語（ASL）的工具用不上
+
+試了三條路，各卡在不同的地方。
+
+**1. 預訓練 ASL 模型 —— 卡在瀏覽器 runtime。**
+[`sign/kaggle-asl-signs-1st-place`](https://huggingface.co/sign/kaggle-asl-signs-1st-place)
+（250 個詞、MIT、11 MB、吃 MediaPipe 骨架）是最理想的模型，也真的載入成功：250 類、127 ms。
+問題在跑它的東西。瀏覽器唯一能跑 `.tflite` 的 `@tensorflow/tfjs-tflite` 從 2023 年起停在
+`0.0.1-alpha.10`，沒有調整輸入張量大小的 API —— 直譯器被鎖在佔位的 `[1, 543, 3]`，
+而模型需要可變長度序列，連這個形狀都直接中止。解法是轉成 ONNX 給 `onnxruntime-web` 跑；
+接線留在 `asl.js`。
+
+**2. 公開 ASL 資料集當種子詞彙 —— 卡在跨人準確率。**
+[`scripts/build-seed-vocabulary.mjs`](samples/express/scripts/build-seed-vocabulary.mjs)
+把 WLASL 的骨架序列轉成這個 app 的樣板格式，走的是跟即時路徑同一份 `features.js`。
+用 16 個詞 × 5 個不同人的樣本量測：同詞距離 0.42、異詞 0.65，
+**開口時精確度約 50%**，調任何拒識門檻都一樣。訊號是真的（7 倍於隨機），但限制是結構性的 ——
+DTW 比對的是範例，而人跟人的差異大於詞跟詞的差異。跨人是訓練模型要解的事，又回到第 1 條。
+
+**3. 韓國手語模型 —— 卡在沒有文件。**
+`gyann/edge-sign-ksl-mediapipe`（2,771 個詞）把 137 個 OpenPose 慣例的關鍵點塞進 959 維，
+排列方式沒有任何說明。從它公開的正規化統計反推，畫出來是散點不是人形。
+猜錯不會報錯，只會回一個信心很高的錯詞。
+
+### 為什麼這對這個產品剛好不是問題
+
+三條路卡在同一個要求：認得**所有人**的手語。Signer 不需要這個。它的使用者聽得到但說不出來，
+多半不會手語，也不該為了有聲音去學一門語言。每個人教自己的手勢，系統只需要認得**那一個人** ——
+正是 DTW 最擅長的情境。跨人 42% 對手語翻譯 app 是致命傷，在這裡無關緊要，
+因為沒有人需要比別人的動作。這不是巧合，是把產品定位從「手語」改成「個人手勢」的直接結果。
+
 ## 誠實的部分
 
 - 辨識比對的是使用者自己的錄影，所以對錄的那個人很準、換人就差（實測跨人 42%）。
