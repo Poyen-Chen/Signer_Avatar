@@ -1,48 +1,103 @@
-# Perxona Connect Samples
+# Signer — your gestures, spoken by an avatar
 
-Minimal sample apps for building with Perxona Connect.
+> **Perxona Taipei Hackathon 2026.** A person who can hear but cannot speak teaches
+> an avatar their own gestures. The avatar becomes their voice.
 
-> All samples and tools in this repository use a Perxona Connect account. Sign up at <https://console.perxona.ai> — there is
-> no sign-up API. See [`samples/express/README.md`](samples/express/README.md) for the full steps.
+## The idea
 
-## Usage and Subscription
+There are people who understand you perfectly and cannot answer you: after a
+laryngectomy, with ALS, with cerebral palsy, with severe dysarthria. They *hear*.
+They just have no voice.
 
-> ⚠️ **Connect Kit is currently in Preview.** Through **2026/09/20** (subject to platform configuration), metered calls
-> (chatbot conversations) are not subject to usage-credit enforcement. Put less ceremoniously: the meter exists, but nobody
-> is sending you a bill yet.
+Today their options are typing on a phone and pressing play. It is slow, and it
+turns a conversation into an operation — the other person looks down at a screen
+and listens to a machine, not at a person who is speaking to them.
 
-When credit enforcement starts, Connect Kit sign-ups are treated as Perxona Console **Free Plan** users by default. If that
-organization's credits are exhausted, **or its subscription itself is no longer active**, metered calls (such as chatbot
-chat) fail with the same HTTP `400` and `code: 1003`, with a body like one of these:
-`{"code": 1003, "details": "credit_points exhausted for org_id: ..."}` or
-`{"code": 1003, "details": "Subscription status is not valid for org_id: ..."}` — the `details` field is what tells the two
-apart. A third, separate case — **no subscription record for the org at all** — fails with HTTP `403` and
-`{"code": 14005, "details": "No active subscription found for org_id: ..."}` instead. At that
-point, sign in to [Perxona Console](https://console.perxona.ai/asia) (use the region matching your account — `/asia` or `/eu`)
-with your Connect account credentials (see [`samples/express/README.md`](samples/express/README.md#getting-a-connect-account)
-for sign-up steps), open the organization management page, review **Subscription**, then top up credits or upgrade the plan.
+Signer gives them a voice with a face:
 
-## Samples
+1. **Teach.** Make any gesture you like — your own, not a sign language — and
+   type the sentence it should say. Three takes. Thirty seconds.
+2. **Speak.** From then on, that gesture makes a Perxona avatar say the sentence
+   out loud, with a matching expression and body gesture: it raises a hand for a
+   greeting, nods for a thank-you, and if it didn't catch the gesture it says
+   *"Sorry, I didn't catch that. Let me try again."* — because for a mute user,
+   the avatar asking to repeat **is** the user asking.
 
-- [`samples/express/`](samples/express/) — an Express-based starter that shows the basic Connect flow. See
-  [`samples/express/README.md`](samples/express/README.md) for setup and usage.
+The other person sees a face that is talking to them. The mute person, for the
+first time in that conversation, is someone who is *speaking* rather than
+someone who is *typing*.
 
-## Tools
+## Why an avatar, not a speaker
 
-- [`tools/motion-browser/`](tools/motion-browser/) — a web UI for previewing and controlling Perxona avatars. See
-  [`tools/motion-browser/README.md`](tools/motion-browser/README.md) for setup and usage.
+Take the avatar away and what is left is a keyboard and a loudspeaker — that has
+existed for forty years. The avatar is what turns text-to-speech into a person:
 
-## Presenter SDK Integration FAQs
+- **A body that matches the meaning.** The Perxona motion catalog carries
+  `intent:` tags (greeting, goodbye, apology, agreement, confusion…). Signer looks
+  the spoken sentence up against them, so the body says what the mouth says.
+- **A face the listener looks at.** People address faces. A listener talks *to*
+  the avatar, and therefore to the person behind it — not to a phone screen.
+- **In-character repair.** A recognition miss becomes the avatar politely asking
+  again, which is what a person does, instead of a silent failure.
 
-Common questions when integrating the `<sv-presenter>` Presenter SDK, across any sample or tool in this repo. For
-setup/environment issues specific to one sample or tool, see its own README instead.
+## Why personal gestures, not sign language
 
-**Why doesn't the avatar speak after `present()`?** `present()` resolves with a `PresentationResult` whose `success`
-is `false` — check the status message it surfaces (`code`/`message`) for why (e.g. no target resolved yet, or the
-Connect API rejected the presentation request). Also confirm the presenter reached `Ready` first.
+Sign language belongs to the Deaf community. Most hearing mute people do not sign
+and should not have to learn a language to get a voice. Signer matches **the
+user's own movements** against takes they recorded themselves, so:
 
-**Why doesn't a motion cued via `[MOTION ...]` markup in `present()` play?** Two common causes: the motion ID isn't
-in the target avatar's motion catalog (check `GET /api/v1/connect/assets/avatars/:id/motions` for what it actually
-supports); or the cue lands too close to the end of the speech — motion playback stops when its accompanying speech
-finishes, so a motion cued near the end of a sentence, or in a very short utterance, may not have enough time to
-play. To play a motion on its own, independent of the speech queue, call `presenter.playMotion(motionId)` instead.
+- there is nothing to learn — any distinct movement works;
+- it is private by construction — recognition runs entirely in the browser
+  (MediaPipe Holistic + DTW template matching); no video and no landmark ever
+  leaves the device. The only thing sent anywhere is the finished sentence,
+  handed to the avatar to speak.
+
+## Demo
+
+- Launch an avatar, enable the camera.
+- **Teach gestures** → type a sentence → *Record next take* → make the gesture →
+  stop. Three times, varying speed and distance.
+- **Speak** → make the gesture → the avatar says it.
+
+The demo is at [`samples/express/public/demos/signer/`](samples/express/public/demos/signer/)
+— see its [README](samples/express/public/demos/signer/README.md) for how it
+works and what was measured, and the [run of show](https://claude.ai/code/artifact/46e55517-8f4f-4033-839a-cc7136ad0e0f)
+for the five-minute stage script.
+
+### Run it
+
+```bash
+cd samples/express
+cp .env.example .env        # add your Perxona Connect secret + publishable keys
+npm install
+npm run fetch:signer-model  # 13 MB MediaPipe Holistic model, once
+npm run dev                 # http://localhost:8083/demos/signer/
+```
+
+Needs Node ≥ 22, Chrome, a webcam, and a [Perxona Console](https://console.perxona.ai)
+account (asia region) for the avatar. Recognition itself needs no account and no
+network.
+
+## What is honest about it
+
+- Recognition matches against the user's own recordings, so it is good for the
+  person who recorded them and poor across people (measured: 42% cross-signer).
+  For personal gestures that is the right trade — nobody needs to perform
+  someone else's movement.
+- Today's vocabulary is whatever the user has taught it. A pre-trained
+  250-sign ASL model (Kaggle ISLR winner, MIT) is wired up in `asl.js` but
+  parked: the only browser TFLite runtime cannot resize its input tensor.
+  Converting it to ONNX is the next step.
+- The avatar's automatic motion selection returns nothing on this account, so
+  Signer picks body gestures itself from the catalog's intent tags. Only 6 of
+  33 avatars carry those tags; the picker preselects one that does.
+
+## Built on
+
+The [Perxona Connect Kit](https://github.com/XRSPACE-Inc/perxona-connect-kit)
+samples (Apache-2.0). Everything under `samples/express/` other than
+`public/demos/signer/`, `scripts/fetch-signer-model.mjs`,
+`scripts/build-seed-vocabulary.mjs` and small server/landing-page edits is
+XRSPACE's original sample code — see their
+[README](samples/express/README.md) for the Connect API, keys, and the
+`<sv-presenter>` component.
