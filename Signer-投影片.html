@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signer Stage Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&display=swap">
+
+<style>
+  /* A stage deck commits to one look: dark ground, projector-safe. */
+  :root {
+    --stage: #0F0E14;
+    --panel: #17161F;
+    --ink: #F4F2EC;
+    --muted: #8E8A9C;
+    --rule: #2A2834;
+    --accent: #8B7CFF;
+    --accent-deep: #5B4BD6;
+    --amber: #E0A253;
+    --ok: #6EE7A0;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Noto Sans TC", "PingFang TC", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --script: "Newsreader", Georgia, "Songti TC", serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--stage);
+    color: var(--ink);
+    font-family: var(--sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Deck mechanics ───────────────────────────────────────────────── */
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(2rem, 6vw, 6rem) clamp(2rem, 8vw, 9rem);
+    animation: in 260ms ease-out;
+  }
+  .slide.is-active { display: flex; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) { .slide { animation: none; } }
+
+  .chrome {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem clamp(2rem, 8vw, 9rem);
+    font-family: var(--mono); font-size: 0.72rem; color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .progress { position: absolute; left: 0; top: 0; height: 3px; background: var(--accent); transition: width 220ms ease; }
+
+  /* ── Slide typography ─────────────────────────────────────────────── */
+  .cue {
+    font-family: var(--mono); font-size: 0.78rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 1.4rem;
+  }
+  .cue b { color: var(--muted); font-weight: 500; margin-left: 0.8rem; }
+  h1 {
+    font-size: clamp(2.6rem, 6.5vw, 6rem);
+    line-height: 1.04; letter-spacing: -0.025em; font-weight: 700;
+    margin: 0 0 1.6rem; max-width: 18ch; text-wrap: balance;
+  }
+  h1 em { font-style: normal; color: var(--accent); }
+  .lead {
+    font-size: clamp(1.15rem, 2.1vw, 1.7rem); line-height: 1.5;
+    color: var(--ink); max-width: 34ch; margin: 0 0 1.2rem; text-wrap: pretty;
+  }
+  .lead.dim { color: var(--muted); }
+  /* What you actually say — set in serif italic, the deck's only script line. */
+  .say {
+    font-family: var(--script); font-style: italic;
+    font-size: clamp(1.2rem, 2.2vw, 1.75rem); line-height: 1.5;
+    color: var(--ink); max-width: 36ch;
+    padding-left: 1.1rem; border-left: 3px solid var(--accent);
+    margin: 1.6rem 0 0; text-wrap: pretty;
+  }
+
+  /* ── Components ───────────────────────────────────────────────────── */
+  .title-mark {
+    font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 2rem;
+  }
+  .title-mark b { color: var(--accent); }
+
+  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; max-width: 62rem; margin-top: 0.6rem; }
+  .step { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 1.6rem 1.8rem; }
+  .step .n { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.16em; color: var(--accent); margin-bottom: 0.5rem; }
+  .step h2 { font-size: clamp(1.3rem, 2.4vw, 2rem); margin: 0 0 0.5rem; line-height: 1.2; }
+  .step p { margin: 0; color: var(--muted); font-size: clamp(0.95rem, 1.5vw, 1.2rem); line-height: 1.5; }
+
+  .table { width: 100%; max-width: 62rem; border-collapse: collapse; font-size: clamp(1rem, 1.7vw, 1.35rem); margin-top: 0.4rem; }
+  .table th { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 1.2rem 0.6rem 0; font-weight: 600; }
+  .table td { padding: 0.75rem 1.2rem 0.75rem 0; border-top: 1px solid var(--rule); vertical-align: top; line-height: 1.4; }
+  .table td.k { font-family: var(--script); font-style: italic; font-size: 1.08em; white-space: nowrap; }
+  .table td.g { color: var(--accent); font-weight: 600; white-space: nowrap; }
+  .table td.w { color: var(--muted); }
+
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; max-width: 66rem; align-items: start; }
+  .col h3 { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 0.9rem; }
+  .col.no h3 { color: var(--muted); }
+  .col.yes h3 { color: var(--accent); }
+  .col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.7rem; }
+  .col li { font-size: clamp(1.05rem, 1.8vw, 1.45rem); line-height: 1.4; padding-left: 1.3rem; position: relative; }
+  .col.no li { color: var(--muted); }
+  .col.no li::before { content: "×"; position: absolute; left: 0; color: var(--muted); }
+  .col.yes li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+
+  .big {
+    font-size: clamp(3rem, 9vw, 8rem); line-height: 1; font-weight: 700; letter-spacing: -0.03em;
+    margin: 0 0 1rem;
+  }
+  .big small { display: block; font-size: 0.28em; font-weight: 500; letter-spacing: 0; color: var(--muted); margin-top: 0.6rem; }
+
+  .honest { border-left: 3px solid var(--amber); padding-left: 1.4rem; max-width: 40ch; }
+  .honest .cue { color: var(--amber); }
+  .honest h1 { font-size: clamp(2rem, 4.5vw, 3.6rem); }
+  .honest .lead { color: var(--ink); }
+
+  .kbd { display: inline-block; font-family: var(--mono); font-size: 0.7rem; padding: 0.1rem 0.4rem; border: 1px solid var(--rule); border-radius: 4px; color: var(--muted); }
+
+  @media (max-width: 52rem) {
+    .steps, .split { grid-template-columns: 1fr; }
+    .table td.k, .table td.g { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="deck" id="deck">
+  <div class="progress" id="progress"></div>
+
+  <!-- 1 · Title -->
+  <section class="slide is-active">
+    <p class="title-mark"><b>Signer</b> · Perxona Taipei Hackathon 2026</p>
+    <h1>用你自己的手勢，<br>讓 avatar <em>替你開口</em>。</h1>
+    <p class="lead dim">一個聽得到、卻說不出話的人，教 avatar 認得自己的手勢。從此 avatar 就是他的聲音。</p>
+  </section>
+
+  <!-- 2 · The person -->
+  <section class="slide">
+    <p class="cue">0:00 <b>問題</b></p>
+    <h1>有一群人聽得到你，<br>卻<em>說不出來</em>。</h1>
+    <p class="lead">喉癌切除聲帶的人。漸凍人。腦性麻痺。他們完全聽得懂你 —— 只是沒有聲音回答你。</p>
+    <p class="say">「現在的解法是打字給你看。可是打字很慢，而且對方會低頭看螢幕，不是看著他。他變成了一台機器，而不是一個在說話的人。」</p>
+  </section>
+
+  <!-- 3 · What it is -->
+  <section class="slide">
+    <p class="cue">0:35 <b>解法</b></p>
+    <h1>這個 avatar，<br>就是<em>他的聲音</em>。</h1>
+    <div class="steps">
+      <div class="step"><div class="n">STEP 1 · 教</div><h2>做一個自己的手勢，打上它該說的話</h2><p>任何動作都行 —— 不是手語，是你自己發明的。錄三次，三十秒。</p></div>
+      <div class="step"><div class="n">STEP 2 · 說</div><h2>之後做那個手勢，avatar 就替你說出來</h2><p>大聲說、有表情、有動作。對方看的是一張會說話的臉。</p></div>
+    </div>
+  </section>
+
+  <!-- 4 · Live: one gesture -->
+  <section class="slide">
+    <p class="cue">1:00 <b>Live</b></p>
+    <h1>一個手勢，<br><em>一整句話</em>。</h1>
+    <p class="lead dim">切到 app。做打招呼的手勢。停下來，讓 avatar 講完。</p>
+    <p class="say">「注意它的手 —— 打招呼的時候它舉手，不是隨便動一動。這個動作是照句子的語意選的。」</p>
+  </section>
+
+  <!-- 5 · Semantic gestures -->
+  <section class="slide">
+    <p class="cue">1:40 <b>Live</b></p>
+    <h1>身體說的，<br>跟嘴巴說的是<em>同一件事</em>。</h1>
+    <table class="table">
+      <tr><th>句子</th><th>avatar 選的動作</th><th>為什麼</th></tr>
+      <tr><td class="k">Hi there</td><td class="g">Casual Arm Raise</td><td class="w">greeting</td></tr>
+      <tr><td class="k">Thank you.</td><td class="g">Right Arm Raise and Hold</td><td class="w">approval</td></tr>
+      <tr><td class="k">Sorry</td><td class="g">Formal Bow Greeting</td><td class="w">apology</td></tr>
+      <tr><td class="k">What is your name?</td><td class="g">Right Arm Point Up</td><td class="w">confusion</td></tr>
+    </table>
+    <p class="say">「平台的動作庫裡每個動作都帶著意圖標籤。我們從句子的語意去查 —— 這不是隨機的。」</p>
+  </section>
+
+  <!-- 6 · Teach it live -->
+  <section class="slide">
+    <p class="cue">2:15 <b>Live · 核心</b></p>
+    <h1>這些<em>不是手語</em>。<br>是他自己發明的。</h1>
+    <p class="lead">誰給我一句話？我現場教它。</p>
+    <p class="say">「三次。它比對的是我自己的動作，不是一套要學的語言 —— 所以不需要會手語。一個說不出話的人，三十秒就能給自己一句新的話。」</p>
+  </section>
+
+  <!-- 7 · Thirty seconds -->
+  <section class="slide">
+    <p class="cue">2:15 <b>重點</b></p>
+    <p class="big">30 秒<small>給自己一句新的話 —— 不用學任何語言</small></p>
+    <p class="lead dim">手語要學三年，而且對方也得會。自己的手勢：任何動作、任何一句話、三次。</p>
+  </section>
+
+  <!-- 8 · Privacy -->
+  <section class="slide">
+    <p class="cue">3:15 <b>隱私</b></p>
+    <h1>什麼都<em>不離開</em>這台筆電。</h1>
+    <p class="lead">辨識全程在瀏覽器裡跑。影像、骨架，都不出去 —— 因為這是別人的對話，不是我們的資料。</p>
+    <p class="say">「唯一送出去的，是那一句已經翻好的話。」</p>
+  </section>
+
+  <!-- 9 · Why Perxona -->
+  <section class="slide">
+    <p class="cue">3:50 <b>Why Perxona</b></p>
+    <h1>拿掉 avatar，<br>剩下的是什麼？</h1>
+    <div class="split">
+      <div class="col no">
+        <h3>沒有 avatar</h3>
+        <ul>
+          <li>一台打字機加一個喇叭 —— 已經存在四十年</li>
+          <li>對方低頭看螢幕、聽機器聲音</li>
+          <li>他是在「操作一台裝置」</li>
+        </ul>
+      </div>
+      <div class="col yes">
+        <h3>有了 avatar</h3>
+        <ul>
+          <li>一張會說話的臉：打招呼舉手、道謝點頭</li>
+          <li>沒聽清楚時它會說「不好意思，再一次」</li>
+          <li>他第一次在別人眼裡，是「在說話」</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · The line -->
+  <section class="slide">
+    <p class="cue">3:50 <b>Why Perxona</b></p>
+    <h1>avatar 不是裝飾。<br><em>它就是這個人的聲音和身體。</em></h1>
+  </section>
+
+  <!-- 11 · Honest -->
+  <section class="slide">
+    <div class="honest">
+      <p class="cue">誠實的部分</p>
+      <h1>它對錄的人準、對別人不準。</h1>
+      <p class="lead">實測跨人 42%。對個人手勢來說這是<em style="color:var(--amber);font-style:normal">對的取捨</em> —— 沒有人需要做別人的動作。跨人泛化是手語翻譯 app 的難題，不是我們的。</p>
+    </div>
+  </section>
+
+  <!-- 12 · Close -->
+  <section class="slide">
+    <p class="cue">4:40 <b>結尾</b></p>
+    <h1>一個手勢進去，<br>一句話從一張臉出來 ——<br><em>而那張臉，是他的</em>。</h1>
+    <p class="lead dim" style="margin-top:2rem">github.com/Poyen-Chen/Signer_Avatar</p>
+  </section>
+
+  <div class="chrome">
+    <span>Signer · 手勢 → 語音</span>
+    <span id="counter">1 / 12</span>
+    <span><span class="kbd">→</span> <span class="kbd">space</span> 下一張 · <span class="kbd">←</span> 上一張</span>
+  </div>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const counter = document.getElementById("counter");
+  const progress = document.getElementById("progress");
+  let i = 0;
+  try { i = Math.min(Number(localStorage.getItem("signer-deck-slide")) || 0, slides.length - 1); } catch {}
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle("is-active", k === i));
+    counter.textContent = `${i + 1} / ${slides.length}`;
+    progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+    try { localStorage.setItem("signer-deck-slide", String(i)); } catch {}
+  }
+  addEventListener("keydown", (e) => {
+    if (["ArrowRight", " ", "PageDown", "Enter"].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    if (e.key === "Home") show(0);
+    if (e.key === "End") show(slides.length - 1);
+  });
+  document.getElementById("deck").addEventListener("click", (e) => {
+    if (e.target.closest("a")) return;
+    show(e.clientX < innerWidth * 0.25 ? i - 1 : i + 1);
+  });
+  show(i);
+</script>
+
+</body>
+</html>
