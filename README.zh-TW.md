@@ -51,6 +51,10 @@ Signer 比對的是**使用者自己的動作**，對照他自己錄的樣本，
 - **Teach gestures** → 打一句話 → *Record next take* → 做手勢 → 停下。三次，換點速度和距離。
 - **Speak** → 做手勢 → avatar 說出那句話。
 
+想先不錄就試，**Import JSON** →
+[`vocabulary/poyen.json`](samples/express/public/demos/signer/vocabulary/poyen.json)
+—— 作者錄的 23 個手勢。對作者本人很準、對別人不準；在上面錄你自己的，就會以你的為主。
+
 程式在 [`samples/express/public/demos/signer/`](samples/express/public/demos/signer/)，
 運作原理與實測數據見它的 [README](samples/express/public/demos/signer/README.md)；
 五分鐘的上台腳本見 [run of show](https://claude.ai/code/artifact/46e55517-8f4f-4033-839a-cc7136ad0e0f)。

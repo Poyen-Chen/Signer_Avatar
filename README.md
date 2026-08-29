@@ -61,6 +61,11 @@ user's own movements** against takes they recorded themselves, so:
   stop. Three times, varying speed and distance.
 - **Speak** → make the gesture → the avatar says it.
 
+To try it without recording first, **Import JSON** →
+[`vocabulary/poyen.json`](samples/express/public/demos/signer/vocabulary/poyen.json)
+— 23 gestures recorded by the author. They match the author well and others
+poorly; record your own on top and yours take over.
+
 The demo is at [`samples/express/public/demos/signer/`](samples/express/public/demos/signer/)
 — see its [README](samples/express/public/demos/signer/README.md) for how it
 works and what was measured, and the [run of show](https://claude.ai/code/artifact/46e55517-8f4f-4033-839a-cc7136ad0e0f)
