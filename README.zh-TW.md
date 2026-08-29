@@ -47,6 +47,9 @@ Signer 比對的是**使用者自己的動作**，對照他自己錄的樣本，
 
 ## Demo
 
+**[▶ 在 YouTube 看 demo 影片](https://youtu.be/I5ZKS3Lbicg)** —— 教一個手勢、比出來、avatar 就講。
+
+
 - 啟動 avatar，開啟攝影機。
 - **Teach gestures** → 打一句話 → *Record next take* → 做手勢 → 停下。三次，換點速度和距離。
 - **Speak** → 做手勢 → avatar 說出那句話。

@@ -56,6 +56,9 @@ user's own movements** against takes they recorded themselves, so:
 
 ## Demo
 
+**[▶ Watch the demo on YouTube](https://youtu.be/I5ZKS3Lbicg)** — teach a gesture, make it, and the avatar speaks.
+
+
 - Launch an avatar, enable the camera.
 - **Teach gestures** → type a sentence → *Record next take* → make the gesture →
   stop. Three times, varying speed and distance.
