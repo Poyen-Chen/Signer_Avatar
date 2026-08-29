@@ -3,6 +3,8 @@
 > **Perxona Taipei Hackathon 2026.** A person who can hear but cannot speak teaches
 > an avatar their own gestures. The avatar becomes their voice.
 
+[繁體中文](README.zh-TW.md)
+
 ## The idea
 
 There are people who understand you perfectly and cannot answer you: after a
