@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Perxona Connect Kit</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 40rem;
+        margin: 4rem auto;
+        padding: 0 1.5rem;
+        color: #1a1a1a;
+        line-height: 1.7;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1.25rem;
+      }
+      ul {
+        padding-left: 1.25rem;
+      }
+      li {
+        margin-bottom: 1rem;
+      }
+      li:last-child {
+        margin-bottom: 0;
+      }
+      a {
+        color: #6a5ae0;
+      }
+      .badge {
+        display: inline-block;
+        margin-left: 0.15rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        background: #6a5ae0;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        vertical-align: 0.1em;
+      }
+      .prereq {
+        display: block;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.7rem;
+        border-left: 3px solid #d97706;
+        background: #fffbeb;
+        border-radius: 0 4px 4px 0;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Perxona Connect Kit — Demos</h1>
+    <p>
+      Two demos. Both hold a conversation the avatar speaks aloud, on the same
+      backend in <code>server.mjs</code> and the same
+      <code>&lt;sv-presenter&gt;</code> component — what differs is which side
+      of the work you are looking at. <strong>Take them in order:</strong> the
+      chatbot you make in the first is the one the second answers through.
+    </p>
+    <ul>
+      <li>
+        <a href="demos/studio/">Studio</a>
+        <span class="badge">Start here</span> —
+        <strong>the console you build it from.</strong> Browse the catalog,
+        create and edit chatbots with knowledge files and function tools,
+        interrupt the avatar mid-sentence, watch the SDK's events in a live
+        timeline. A switch chooses who runs the model: a Connect-hosted chatbot
+        or your own <code>LLM_API_KEY</code> — flip it mid-conversation and the
+        same history carries over.
+      </li>
+      <li>
+        <a href="demos/embed/">Embed</a> —
+        <strong>what it looks like once it is live.</strong> A product site with
+        an avatar answering questions on it. No controls, no settings, nothing
+        on the page about its own configuration: the avatar and the chatbot are
+        already chosen by the time a visitor arrives.
+        <span id="embed-prereq" class="prereq" hidden>
+          <strong>Studio first.</strong> Embed answers through a Connect
+          chatbot, and a new account doesn't have one yet — that's the normal
+          first step, not a problem. <a href="demos/studio/">Open Studio</a>,
+          press <strong>Save</strong> on the form it opens for you, then come
+          back here.
+        </span>
+      </li>
+      <li>
+        <a href="demos/signer/">Signer</a>
+        <span class="badge">ASL</span> —
+        <strong>the SDK used in reverse.</strong> A Deaf signer signs to the
+        camera, the browser recognizes it on-device, and the avatar says the
+        sentence aloud to a hearing listener. Recognition is fully offline
+        (MediaPipe Holistic + DTW) and no video ever leaves the machine; Connect
+        does the half it is good at &mdash; speaking, with a face. Nothing
+        beyond <code>present()</code> is billed.
+        <span class="prereq">
+          <strong>Record signs first.</strong> The vocabulary is recorded by the
+          user, so open the demo, record a few signs 3&ndash;5 times each under
+          <em>Record signs</em>, then switch to <em>Recognize</em>.
+        </span>
+      </li>
+    </ul>
+    <!-- The one thing this page checks. Embed consumes a chatbot; Studio is
+         where you make one, and a brand-new organization has none — so without
+         this a participant clicks the first demo and gets a product page with a
+         hole in it, with the explanation only in a terminal or a devtools
+         console they may not have open. Embed's own page stays silent about its
+         configuration by design; this page is for the developer, never for a
+         visitor, so it is the right place to say it. -->
+    <script type="module">
+      const prereq = document.getElementById("embed-prereq");
+      try {
+        const { chatbotId, mock } = await fetch("/api/config").then((r) =>
+          r.json(),
+        );
+        prereq.hidden = mock || Boolean(chatbotId);
+      } catch {
+        prereq.hidden = true; // server unreachable is a different problem
+      }
+    </script>
+  </body>
+</html>

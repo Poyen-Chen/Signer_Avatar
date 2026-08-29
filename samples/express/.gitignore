@@ -1,0 +1,9 @@
+node_modules/
+.env
+*.log
+.DS_Store
+*.swp
+
+# MediaPipe model, fetched by scripts/fetch-signer-model.mjs. A 13 MB binary
+# that belongs in a download step, not in the repository.
+public/models/

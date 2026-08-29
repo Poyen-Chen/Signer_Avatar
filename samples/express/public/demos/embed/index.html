@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Embed | Perxona Connect Kit</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Deliberately shaped like a real product page, not a control panel:
+         the point of this demo is what the avatar looks like *inside someone
+         else's site*. Everything outside .avatar-slot is filler copy, and
+         nothing anywhere on the page mentions configuration — see the README
+         for why, and the console for what went wrong when it does. -->
+    <header class="site-header">
+      <a class="logo" href="/">◆ XRSPACE</a>
+      <nav>
+        <a href="#">Products</a><a href="#">Pricing</a><a href="#">Docs</a>
+      </nav>
+    </header>
+
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Virtual humans for your product</p>
+        <h1>Everything your team needs, in one place.</h1>
+        <p class="lede">
+          Build, deploy and scale lifelike avatars that speak, listen and
+          respond — on your site, in your app, wherever your customers already
+          are. Ask ours anything.
+        </p>
+        <div class="cta-row">
+          <!-- Filler chrome only — see the header comment above. Marked
+               inert rather than left to look clickable: aria-disabled plus a
+               title tooltip, not the disabled attribute, so the tooltip
+               still shows on hover in every browser. -->
+          <button
+            class="cta"
+            aria-disabled="true"
+            title="Demo placeholder — not wired to anything"
+          >
+            Start free trial
+          </button>
+          <button
+            class="cta secondary"
+            aria-disabled="true"
+            title="Demo placeholder — not wired to anything"
+          >
+            Book a demo
+          </button>
+        </div>
+      </section>
+
+      <!-- ── The embedded avatar ──────────────────────────────────────── -->
+      <aside class="avatar-slot">
+        <div id="stage" class="stage">
+          <sv-presenter></sv-presenter>
+          <!-- Removed on PRESENTER_STATUS: Ready. Without it the slot is a
+               black rectangle for as long as the engine and avatar take to
+               load, which reads as broken rather than as loading. -->
+          <div id="stage-loading" class="stage-loading" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <!-- Shown instead, in the same slot, when start() rejects for any
+               reason (bad config, an unreachable presenter engine, no
+               chatbot yet). Fixed and non-technical, same as the
+               subscription-issue chat message — the actual reason still goes
+               only to console.error. See app.js and the README. -->
+          <div id="stage-error" class="stage-error" hidden></div>
+        </div>
+
+        <!-- Hidden until PRESENTER_STATUS reports Ready. There is no separate
+             "enable audio" control: autoplay policy needs a user gesture, and
+             sending the first message is one — see app.js. -->
+        <div id="chat" class="chat" hidden>
+          <ul id="chat-log" class="chat-log"></ul>
+          <form id="chat-form" class="chat-form">
+            <input
+              id="chat-input"
+              class="chat-input"
+              type="text"
+              autocomplete="off"
+              placeholder="Ask me anything…"
+              aria-label="Message"
+            />
+            <button id="send-btn" class="send-btn" type="submit">Send</button>
+          </form>
+        </div>
+        <!-- Nothing else lives here. This page is a product site, and a
+             product site does not explain its own configuration to visitors:
+             when the widget cannot start, #stage-error says so in one fixed
+             sentence and the reason goes to the console. See the README. -->
+      </aside>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

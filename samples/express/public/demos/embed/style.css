@@ -1,0 +1,268 @@
+:root {
+  color-scheme: dark;
+  --bg: #0e1116;
+  --surface: #171c24;
+  --border: #2a323d;
+  --text: #e8edf2;
+  --muted: #94a1b2;
+  --accent: #7c9cf5;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    16px/1.6 ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+/* ── Filler chrome ─────────────────────────────────────────────────────── */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem clamp(1rem, 5vw, 3rem);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+.site-header nav a {
+  color: var(--muted);
+  text-decoration: none;
+  margin-left: 1.25rem;
+  font-size: 0.9rem;
+}
+.page {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+  width: min(1120px, calc(100% - 2rem));
+  margin: auto;
+  padding: clamp(2rem, 6vw, 4.5rem) 0;
+}
+.eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+.hero h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(1.9rem, 4.5vw, 3rem);
+  line-height: 1.12;
+}
+.lede {
+  color: var(--muted);
+  max-width: 46ch;
+}
+.cta-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+.cta {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.7rem 1.1rem;
+  background: var(--accent);
+  color: #0b1020;
+  font: inherit;
+  font-weight: 700;
+  /* Inert filler, not a real control — see the title tooltip in index.html. */
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.cta.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ── The embedded avatar — the only part that is the Connect Kit ───────── */
+
+.avatar-slot {
+  position: sticky;
+  top: 2rem;
+}
+.stage {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #090c11;
+}
+sv-presenter {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.stage-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #090c11;
+}
+.stage-loading span {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.stage-loading span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.stage-loading span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-0.2rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-loading span {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+.stage-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--muted);
+  background: #090c11;
+}
+
+/* ── Chat ────────────────────────────────────────────────────────────────
+   Sized to sit under the stage inside the same slot: this is a widget on
+   someone's page, not a page of its own. */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.chat-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 13rem;
+  overflow-y: auto;
+}
+.chat-log:empty {
+  display: none;
+}
+.msg {
+  max-width: 85%;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  /* Long unbreakable tokens (e.g. the Console URL in the subscription-issue
+     reply) must wrap instead of running out of the bubble. */
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+.msg--user {
+  align-self: flex-end;
+  background: var(--accent);
+  color: #0b1020;
+}
+.msg--error {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-style: italic;
+}
+.msg--assistant {
+  align-self: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.chat-form {
+  display: flex;
+  gap: 0.4rem;
+}
+.chat-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+.chat-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.chat-input:disabled {
+  opacity: 0.6;
+}
+.send-btn {
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent);
+  color: #0b1020;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 820px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+  .avatar-slot {
+    position: static;
+  }
+  .stage {
+    aspect-ratio: 4 / 3;
+  }
+}
