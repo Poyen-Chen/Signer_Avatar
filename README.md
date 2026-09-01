@@ -172,7 +172,7 @@ leaves the developer's machine.
 
 ```mermaid
 flowchart LR
-    subgraph device["🔒 On this device (browser) — nothing leaves"]
+    subgraph device["On this device (browser) — nothing leaves"]
         direction LR
         CAM["📷 Camera"] --> MP["MediaPipe Holistic<br/><small>pose 33 · hands 21×2 · WASM, 30 fps</small>"]
         MP --> FE["features.js<br/><small>128-dim, body-relative</small>"]
