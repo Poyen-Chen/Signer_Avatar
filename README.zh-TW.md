@@ -137,7 +137,7 @@ Signer_Avatar/
 ### 同一份程式碼的兩種跑法
 
 ```mermaid
-flowchart LR
+flowchart TD
     SRC["📁 public/demos/signer/<br/><small>一份原始碼，兩種部署</small>"]
 
     SRC --> DEV["🖥️ server.mjs<br/><small>localhost:8083</small>"]
@@ -244,7 +244,7 @@ interpreter 因此卡在佔位的 `[1, 543, 3]`，就算卡在那裡計算圖也
 
 ## ⚖️ 授權
 
-| | |
+| 授權 | 適用範圍 |
 |---|---|
 | 🟢 **MIT** —— [`LICENSE-MIT`](LICENSE-MIT) | Signer 自己的程式碼：`public/demos/signer/`、`scripts/build-static-site.mjs`、`scripts/fetch-signer-model.mjs`、`scripts/build-seed-vocabulary.mjs`，以及兩份 README。© 2026 Po-Yen Chen |
 | 🟠 **Apache-2.0** —— [`LICENSE`](LICENSE) | 其餘全部：[Perxona Connect Kit](https://github.com/XRSPACE-Inc/perxona-connect-kit) 的範例與工具 © XRSPACE CO., LTD. |

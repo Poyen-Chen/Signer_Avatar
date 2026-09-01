@@ -147,7 +147,7 @@ original Connect Kit sample code, untouched.
 ### Two ways the same code runs
 
 ```mermaid
-flowchart LR
+flowchart TD
     SRC["📁 public/demos/signer/<br/><small>one source, two deployments</small>"]
 
     SRC --> DEV["🖥️ server.mjs<br/><small>localhost:8083</small>"]
@@ -267,7 +267,7 @@ than sign language.
 
 ## ⚖️ License
 
-| | |
+| License | Applies to |
 |---|---|
 | 🟢 **MIT** — [`LICENSE-MIT`](LICENSE-MIT) | Signer's own code: `public/demos/signer/`, `scripts/build-static-site.mjs`, `scripts/fetch-signer-model.mjs`, `scripts/build-seed-vocabulary.mjs`, both READMEs © 2026 Po-Yen Chen |
 | 🟠 **Apache-2.0** — [`LICENSE`](LICENSE) | Everything else: the [Perxona Connect Kit](https://github.com/XRSPACE-Inc/perxona-connect-kit) samples and tools © XRSPACE CO., LTD. |
