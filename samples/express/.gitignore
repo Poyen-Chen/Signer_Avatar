@@ -7,3 +7,6 @@ node_modules/
 # MediaPipe model, fetched by scripts/fetch-signer-model.mjs. A 13 MB binary
 # that belongs in a download step, not in the repository.
 public/models/
+
+# Static site build output — published to the gh-pages branch, not tracked here.
+dist/

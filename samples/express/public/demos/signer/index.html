@@ -10,7 +10,7 @@
     <header class="topbar">
       <div class="brand">
         <h1>Signer</h1>
-        <span class="tagline">your gestures, spoken by an avatar &middot; nothing leaves this device</span>
+        <span class="tagline">your gestures, spoken by a <strong>Perxona avatar</strong> &middot; recognition never leaves this device</span>
       </div>
       <nav class="modes" role="tablist" aria-label="Mode">
         <button id="mode-recognize" class="mode is-active" role="tab" aria-selected="true">Speak</button>
@@ -56,6 +56,18 @@
           </div>
         </div>
         <p id="motion-note" class="motion-note"></p>
+
+        <!-- Try it without a camera. A first-time visitor lands here with no
+             recorded gestures, so without this the avatar has nothing to say
+             and the page looks broken. See DEMO_PHRASES in app.js. -->
+        <section class="demo-strip">
+          <h2>Try the Perxona avatar &mdash; no camera needed</h2>
+          <p class="demo-lead">
+            Press a sentence. The Perxona avatar above speaks it aloud and plays the body
+            gesture that matches its meaning &mdash; the same path a recognized gesture takes.
+          </p>
+          <div id="demo-phrases" class="demo-phrases"></div>
+        </section>
 
         <div class="composer">
           <div id="gloss-strip" class="gloss-strip">

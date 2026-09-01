@@ -18,7 +18,6 @@
  * Zero build step, plain ESM, matching the other demos in this kit.
  */
 
-import { FilesetResolver, HolisticLandmarker, DrawingUtils } from "/vendor/tasks-vision/vision_bundle.mjs";
 import { frameToVector, resample, handsPresent } from "./features.js";
 import { Segmenter, SegmentState } from "./segment.js";
 import { classify } from "./dtw.js";
@@ -26,7 +25,26 @@ import { Vocabulary, TEMPLATE_FRAMES, MAX_SAMPLES_PER_WORD, SUGGESTED_WORDS } fr
 import { composeSentence } from "./sentence.js";
 import { buildMotionIndex, pickMotion, describeIndex } from "./motions.js";
 
-const MODEL_URL = "/models/holistic_landmarker.task";
+/**
+ * Where this page's assets and API live.
+ *
+ * Two deployments share this file. The Express sample serves it at
+ * /demos/signer/ with /vendor, /models and /api at the site root. The static
+ * build (scripts/build-static-site.mjs) has no server at all: it publishes the
+ * page at the root of a GitHub Pages site, reads the catalog from JSON baked in
+ * at build time, and pulls the vision bundle and model from a CDN. index.html
+ * is what declares which of the two this is.
+ */
+const STATIC = globalThis.SIGNER_STATIC ?? null;
+
+const VISION_BUNDLE = STATIC?.visionBundle ?? "/vendor/tasks-vision/vision_bundle.mjs";
+const WASM_BASE = STATIC?.wasmBase ?? "/vendor/tasks-vision/wasm";
+const MODEL_URL = STATIC?.modelUrl ?? "/models/holistic_landmarker.task";
+
+// Dynamic, because the URL is only known once STATIC has been read. This module
+// already awaits at the top level for the app config, so nothing is lost.
+const { FilesetResolver, HolisticLandmarker, DrawingUtils } = await import(VISION_BUNDLE);
+
 const AUTOSPEAK_DELAY_MS = 1500;
 /** Recognition needs at least this many samples of at least this many words to
  *  mean anything; below it, the classifier's nearest neighbour is noise. */
@@ -69,6 +87,7 @@ const autospeakDelay = $("autospeak-delay");
 const recognitionLog = $("recognition-log");
 const vocabSummary = $("vocab-summary");
 const motionNote = $("motion-note");
+const demoPhrases = $("demo-phrases");
 
 const wordInput = $("word-input");
 const suggestedWords = $("suggested-words");
@@ -144,8 +163,20 @@ async function loadPresenterEngine(presenterUrl) {
 const appConfig = await request("/api/config");
 let presenterEngineReady = false;
 
+/**
+ * Map a server API route onto the file the static build baked for it.
+ * `/api/avatars/cc069.../motions` → `api/motions/cc069....json`, everything
+ * else → `api/<name>.json`. Relative, because a project site is served from a
+ * subpath (…/Signer_Avatar/) where an absolute /api/… would miss.
+ */
+function staticApiPath(path) {
+  const motions = path.match(/^\/api\/avatars\/([^/]+)\/motions$/);
+  return motions ? `api/motions/${motions[1]}.json` : `api/${path.replace(/^\/api\//, "")}.json`;
+}
+
 /** Shared fetch wrapper — same contract as the studio demo's. */
 async function request(path, { method = "GET", body } = {}) {
+  if (STATIC) path = new URL(staticApiPath(path), document.baseURI).href;
   const res = await fetch(path, {
     method,
     headers: { "Content-Type": "application/json" },
@@ -330,7 +361,15 @@ presenter.addEventListener("ALL_PERFORMANCE_FINISHED", () => {
   updateSpeakBtn();
 });
 
-initBtn.addEventListener("click", async () => {
+/**
+ * Bring the avatar up with whatever the pickers currently hold.
+ *
+ * Called from the Launch button and, on the public build, straight after the
+ * catalog loads: a visitor who has to press a button before there is any avatar
+ * on screen has no way to tell the page apart from a broken one. Audio is the
+ * reason the button still exists — see resumeAudioPlayback below.
+ */
+async function launchAvatar() {
   if (appConfig.mock) {
     setStatus("Mock mode has no upstream credentials — the avatar cannot launch.", "warn");
     return;
@@ -341,7 +380,8 @@ initBtn.addEventListener("click", async () => {
   try {
     // Must run inside the click itself — browser autoplay policy only unlocks
     // audio from a direct user gesture, and an await before this would put it
-    // outside that gesture.
+    // outside that gesture. On the auto-launch path there is no gesture to be
+    // inside of, which is why every demo phrase button unlocks audio again.
     await presenter.resumeAudioPlayback?.();
     const { connect_key } = await request("/api/connect-key");
     setStatus("Initializing\u2026");
@@ -356,7 +396,9 @@ initBtn.addEventListener("click", async () => {
     state.isLaunching = false;
     updateInitBtn();
   }
-});
+}
+
+initBtn.addEventListener("click", launchAvatar);
 
 for (const select of [avatarSelect, sceneSelect, voiceSelect]) {
   select.addEventListener("change", updateInitBtn);
@@ -373,7 +415,7 @@ async function startTracking() {
   cameraBtn.disabled = true;
   try {
     setStatus("Loading recognition model\u2026");
-    const fileset = await FilesetResolver.forVisionTasks("/vendor/tasks-vision/wasm");
+    const fileset = await FilesetResolver.forVisionTasks(WASM_BASE);
     landmarker = await HolisticLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
       runningMode: "VIDEO",
@@ -751,6 +793,61 @@ async function speak() {
 }
 
 speakBtn.addEventListener("click", speak);
+
+// ── Try it without a camera ──────────────────────────────────────────────
+
+/**
+ * Sentences a first-time visitor can hear the avatar say without recording
+ * anything. They are labels from the author's own recorded vocabulary, so each
+ * one is a real gesture in the demo rather than a made-up line, and each maps
+ * to a different `intent:` in the motion catalog — which is the point worth
+ * seeing: greeting waves, thanks nods, apology shrugs.
+ *
+ * Deliberately routed through the gloss buffer and speak(), not straight into
+ * present(): a phrase button and a recognized gesture then travel the identical
+ * path, so what a visitor sees is what the camera path does.
+ */
+const DEMO_PHRASES = [
+  "Hello",
+  "Nice to meet you",
+  "How are you?",
+  "Thank you.",
+  "Please",
+  "Sorry",
+  "Yes",
+  "No",
+  "I love you",
+  "Goodbye",
+];
+
+function buildDemoPhrases() {
+  demoPhrases.replaceChildren(
+    ...DEMO_PHRASES.map((label) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "demo-phrase";
+      btn.textContent = label;
+      btn.addEventListener("click", async () => {
+        if (!state.presenterReady) {
+          // The avatar is still coming up (or failed to). Launching from inside
+          // this click is also what unlocks audio, so the press is not wasted.
+          await launchAvatar();
+          return;
+        }
+        // Autoplay policy again: the auto-launch happened without a gesture, so
+        // this click is the first chance to unlock the audio context.
+        await presenter.resumeAudioPlayback?.();
+        clearTimeout(state.autospeakTimer);
+        state.glosses = [label];
+        renderGlosses();
+        await speak();
+      });
+      return btn;
+    }),
+  );
+}
+
+buildDemoPhrases();
 clearGlossBtn.addEventListener("click", () => {
   state.glosses = [];
   renderGlosses();
@@ -886,7 +983,7 @@ suggestedWords.replaceChildren(
 sensitivityOut.textContent = `${Number(sensitivity.value).toFixed(1)}×`;
 renderWordList();
 renderGlosses();
-if (vocab.labels().length === 0) setMode("record");
+if (!STATIC && vocab.labels().length === 0) setMode("record");
 
 await loadCatalog();
 
@@ -897,6 +994,18 @@ try {
   await loadPresenterEngine(appConfig.presenterUrl);
   presenterEngineReady = true;
   updateInitBtn();
+  // Only now does <sv-presenter> have initializeWithConnectKey on it, so the
+  // public build's auto-launch belongs here rather than next to the catalog.
+  if (STATIC?.autoLaunch && avatarSelect.value && sceneSelect.value) {
+    // The placeholder tells the reader to pick an avatar and press Launch,
+    // which on this build has already happened. Say what is actually going on
+    // instead — a cold first load spends the better part of a minute pulling
+    // the 3D scene down, and a silent black rectangle for that long is
+    // indistinguishable from a page that is broken.
+    presenterPlaceholder.querySelector("p").textContent =
+      "Starting the Perxona avatar\u2026 the first load pulls down the 3D scene and can take up to a minute.";
+    await launchAvatar();
+  }
 } catch (err) {
   setStatus(`Avatar engine failed to load: ${err.message} (recognition still works)`, "warn");
 }

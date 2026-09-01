@@ -85,7 +85,14 @@ main {
   .workspace { grid-template-columns: 1fr; }
   .signer-side { grid-column: 1; grid-row: 1; position: static; }
   .mode-panel { grid-column: 1; grid-row: 2; }
-}
+
+  /* Except in Speak mode, where the avatar is the thing to look at and the
+     self-view is a check on framing. Stacked, whatever comes first is all a
+     visitor sees before scrolling — and an avatar that has to be scrolled to
+     reads as an avatar that is not there. Teach mode keeps the camera on top,
+     since framing yourself is the entire task there. */
+  .workspace:has(#recognize-panel:not([hidden])) .signer-side { grid-row: 2; }
+  .workspace:has(#recognize-panel:not([hidden])) .mode-panel { grid-row: 1; }
 }
 
 .panel {
@@ -288,3 +295,44 @@ button.is-armed { background: var(--danger); border-color: var(--danger); color:
 .motion-note { margin: 0.5rem 0 0; font-size: 0.76rem; color: var(--muted); min-height: 1.1em; }
 .motion-note.is-warn { color: var(--warn); }
 
+
+/* ── Try it without a camera ─────────────────────────────────────────────
+   Sits directly under the avatar because it is the first thing a visitor
+   with no recorded gestures can actually do. See DEMO_PHRASES in app.js. */
+.demo-strip {
+  margin: 0.9rem 0 0;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.demo-strip h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+.demo-lead {
+  margin: 0 0 0.7rem;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.demo-phrases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.demo-phrase {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo-phrase:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.demo-phrase:active { transform: translateY(1px); }
