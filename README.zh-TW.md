@@ -3,6 +3,10 @@
 > **Perxona Taipei Hackathon 2026。** 一個聽得到、卻說不出話的人，教 avatar 認得自己的手勢。
 > 從此 avatar 就是他的聲音。
 
+**▶ 線上直接玩：<https://poyen-chen.github.io/Signer_Avatar/>** — 免安裝、免註冊。
+Perxona avatar 會自己啟動，點任一句話就聽得到它開口說。
+（首次載入要下載 3D 場景，可能需要一分鐘。）
+
 [English](README.md)
 
 ## 想法

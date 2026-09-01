@@ -3,6 +3,10 @@
 > **Perxona Taipei Hackathon 2026.** A person who can hear but cannot speak teaches
 > an avatar their own gestures. The avatar becomes their voice.
 
+**▶ Try it live: <https://poyen-chen.github.io/Signer_Avatar/>** — no install, no sign-up.
+The Perxona avatar starts by itself; press one of the sentences to hear it speak.
+(The first load pulls down the 3D scene and can take up to a minute.)
+
 [繁體中文](README.zh-TW.md)
 
 ## The idea
