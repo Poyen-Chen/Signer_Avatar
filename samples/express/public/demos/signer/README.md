@@ -59,6 +59,29 @@ The suggested vocabulary is drawn from the 250-sign **PopSign** set used by
 Google's Isolated Sign Language Recognition dataset, so recordings stay
 compatible with that data if the pre-trained model path is ever revived.
 
+### If the avatar stalls at 0% locally
+
+The published build's publishable key is restricted to the domain it is served
+from, and Connect matches that against the browser's `Origin` — so that key is
+refused from `http://localhost` and the presenter never comes up. The catalog
+still loads, because that goes through this server on the secret key, which is
+why the failure looks like a hang rather than an error.
+
+Issue a **second publishable key with an empty allowed-domain list** and put it
+in `PERXONA_CONNECT_PUBLISHABLE_KEY_LOCAL`. This server then hands the browser
+that one; `PERXONA_CONNECT_PUBLISHABLE_KEY` stays the key that ships, and
+`build-static-site.mjs` reads it straight from the environment so the
+unrestricted key can never reach the published site.
+
+## Publishing it
+
+`node --env-file=.env scripts/build-static-site.mjs` freezes every catalog read
+into JSON under `dist/`, so the page runs with no server at all. Publish `dist/`
+as a site root — the live build is the `gh-pages` branch of
+[Signer_Avatar](https://github.com/Poyen-Chen/Signer_Avatar), served at
+<https://poyen-chen.github.io/Signer_Avatar/>. Rotating the publishable key
+means rebuilding and republishing: the key is baked into `api/connect-key.json`.
+
 ## Design notes
 
 **Why DTW rather than a trained model.** It needs no training data and absorbs

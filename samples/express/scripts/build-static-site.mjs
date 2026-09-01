@@ -11,7 +11,9 @@
  *
  * The catalog is read through the running dev server rather than the Connect
  * API directly, so the responses are exactly the shapes app.js already handles
- * (the avatar id normalization in particular).
+ * (the avatar id normalization in particular). The publishable key is the one
+ * exception — it is read from the environment, so a local override cannot
+ * reach the published site.
  *
  *   npm start                                  # in another terminal
  *   node --env-file=.env scripts/build-static-site.mjs
@@ -48,15 +50,30 @@ async function api(path) {
 
 // ── Catalog ─────────────────────────────────────────────────────────────────
 console.log(`Reading the catalog through ${SERVER}…`);
-const [config, connectKey, avatars, scenes, voices] = await Promise.all([
+const [config, avatars, scenes, voices] = await Promise.all([
   api("/api/config"),
-  api("/api/connect-key"),
   api("/api/avatars"),
   api("/api/scenes"),
   api("/api/voices"),
 ]);
 
-if (!connectKey.connect_key) throw new Error("No publishable Connect key to bake in.");
+// Read straight from the environment rather than from GET /api/connect-key.
+// That route hands the browser PERXONA_CONNECT_PUBLISHABLE_KEY_LOCAL when one
+// is set — the unrestricted development key — and baking that into a public
+// site would quietly undo the domain restriction this build depends on.
+const publishableKey = process.env.PERXONA_CONNECT_PUBLISHABLE_KEY;
+if (!publishableKey) {
+  throw new Error("PERXONA_CONNECT_PUBLISHABLE_KEY is not set — nothing to bake in.");
+}
+if (publishableKey === process.env.PERXONA_CONNECT_PUBLISHABLE_KEY_LOCAL) {
+  throw new Error(
+    "PERXONA_CONNECT_PUBLISHABLE_KEY and PERXONA_CONNECT_PUBLISHABLE_KEY_LOCAL are the same key.\n" +
+      "The published site must carry the domain-restricted one; the local override exists precisely\n" +
+      "so the unrestricted key stays off the public build.",
+  );
+}
+const connectKey = { connect_key: publishableKey };
+console.log(`  baking publishable key ${publishableKey.slice(0, 12)}… (must allow the published domain)`);
 console.log(`  ${avatars.items.length} avatars, ${scenes.items.length} scenes, ${voices.items.length} voices`);
 
 // Every avatar's motions, so switching avatars on the published page still

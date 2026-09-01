@@ -61,6 +61,16 @@ const fixedPresenterTarget = hasCompletePresenterTarget
 const CONNECT_SECRET_KEY = process.env.PERXONA_CONNECT_SECRET_KEY;
 const CONNECT_PUBLISHABLE_KEY = process.env.PERXONA_CONNECT_PUBLISHABLE_KEY;
 
+// A published site's publishable key is restricted to the domain it is served
+// from, and the Connect API matches that against the browser's Origin — so the
+// key that ships is refused from http://localhost with a 403 and the presenter
+// never comes up locally. Rather than loosen the shipping key, keep a second
+// unrestricted one for development and hand the browser that one here.
+// PERXONA_CONNECT_PUBLISHABLE_KEY stays the key that ships; only this server
+// substitutes. Optional — unset, nothing changes.
+const CONNECT_PUBLISHABLE_KEY_LOCAL = process.env.PERXONA_CONNECT_PUBLISHABLE_KEY_LOCAL;
+const BROWSER_CONNECT_KEY = CONNECT_PUBLISHABLE_KEY_LOCAL || CONNECT_PUBLISHABLE_KEY;
+
 // All blank is fine — resolveEmbedConfig() picks from the catalog. Half-filled
 // is not: it does nothing silently, so name what is missing.
 if (hasConfiguredPresenterTarget && !hasCompletePresenterTarget) {
@@ -661,7 +671,7 @@ app.get(
       res.status(501).json({ error: "No Connect key to serve in mock mode." });
       return;
     }
-    res.json({ connect_key: CONNECT_PUBLISHABLE_KEY });
+    res.json({ connect_key: BROWSER_CONNECT_KEY });
   }),
 );
 
@@ -1121,6 +1131,9 @@ app.listen(PORT, () => {
   console.log(`\nPerxona Connect Kit`);
   console.log(`  URL  : http://localhost:${PORT}`);
   console.log(`  Mode : ${USE_MOCK ? "MOCK (no real API calls)" : "live"}`);
+  if (CONNECT_PUBLISHABLE_KEY_LOCAL) {
+    console.log(`  Key  : PERXONA_CONNECT_PUBLISHABLE_KEY_LOCAL (browser) — expects no domain restriction`);
+  }
   // Deferred probes so the banner prints immediately and startup never blocks.
   // Labeled API/CDN so each line reads as that resource's reachability.
   api.checkUpstream().then((status) => {
