@@ -1,0 +1,338 @@
+:root {
+  --accent: #6a5ae0;
+  --accent-soft: #efedfd;
+  --ink: #1a1a1a;
+  --muted: #6b6b7b;
+  --line: #e3e3ec;
+  --bg: #f7f7fb;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+/* `hidden` is what the JS toggles throughout, and any rule in this file that
+   sets `display` silently beats it: the UA stylesheet's `[hidden]` and a class
+   selector here have equal specificity, so source order decides and this file
+   wins. That already hid nothing three times — the camera placeholder stayed
+   painted over the live video, and the repair bar and the whole Setup panel
+   showed while marked hidden. One declaration ends the category rather than
+   waiting to be rediscovered on the next component. */
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.6;
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────────── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.25rem;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: baseline; gap: 0.6rem; }
+.brand h1 { font-size: 1.1rem; margin: 0; }
+.tagline { font-size: 0.8rem; color: var(--muted); }
+
+.modes { display: flex; gap: 0.25rem; background: var(--bg); padding: 0.2rem; border-radius: 999px; }
+.mode {
+  border: 0;
+  background: transparent;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.mode.is-active { background: #fff; color: var(--accent); font-weight: 600; box-shadow: 0 1px 3px #0001; }
+
+.status { margin: 0 0 0 auto; font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }
+.status.is-error { color: var(--danger); }
+.status.is-ok { color: var(--ok); }
+
+/* ── Layout ───────────────────────────────────────────────────────────── */
+
+main {
+  padding: 1rem 1.25rem 2rem;
+  max-width: 82rem;
+  margin: 0 auto;
+}
+
+/* The signer's self-view sits in a rail that persists across both modes;
+   whichever mode is active fills the main column beside it. */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(14rem, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.signer-side { grid-column: 2; grid-row: 1; position: sticky; top: 1rem; }
+.mode-panel { grid-column: 1; grid-row: 1; min-width: 0; }
+
+@media (max-width: 62rem) {
+  .workspace { grid-template-columns: 1fr; }
+  .signer-side { grid-column: 1; grid-row: 1; position: static; }
+  .mode-panel { grid-column: 1; grid-row: 2; }
+
+  /* Except in Speak mode, where the avatar is the thing to look at and the
+     self-view is a check on framing. Stacked, whatever comes first is all a
+     visitor sees before scrolling — and an avatar that has to be scrolled to
+     reads as an avatar that is not there. Teach mode keeps the camera on top,
+     since framing yourself is the entire task there. */
+  .workspace:has(#recognize-panel:not([hidden])) .signer-side { grid-row: 2; }
+  .workspace:has(#recognize-panel:not([hidden])) .mode-panel { grid-row: 1; }
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem;
+}
+
+
+/* ── Stages ───────────────────────────────────────────────────────────── */
+
+.stage {
+  position: relative;
+  background: #111;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.stage-avatar { aspect-ratio: 4 / 3; }
+.stage-camera { aspect-ratio: 4 / 3; }
+
+.stage video,
+.stage canvas,
+.stage sv-presenter {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* Mirrored so moving your right hand moves the on-screen hand to the right —
+   people cannot sign to an unmirrored preview. The landmarks stay anatomical;
+   only the pixels flip, here and in the overlay's own transform. */
+.stage video { object-fit: cover; transform: scaleX(-1); }
+.stage canvas { pointer-events: none; }
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-align: center;
+  padding: 1rem;
+  color: #cfcfe0;
+  font-size: 0.9rem;
+}
+.placeholder p { margin: 0; max-width: 24rem; }
+.fineprint { font-size: 0.75rem; color: #8b8ba3; }
+
+.capture-badge {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+.fps-overlay {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.6rem;
+  font-size: 0.7rem;
+  color: #ffffff99;
+  font-variant-numeric: tabular-nums;
+}
+
+.composer { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem; margin: 0.7rem 0; }
+
+/* ── Meters ───────────────────────────────────────────────────────────── */
+
+.meter { display: flex; margin-top: 0.6rem; align-items: center; gap: 0.6rem; font-size: 0.78rem; color: var(--muted); }
+.meter .bar {
+  position: relative;
+  flex: 1;
+  height: 7px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.meter .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 60ms linear; }
+/* The threshold tick: without it the bar says how much you moved but not
+   whether that was enough to start a capture, which is the only question the
+   reader actually has while tuning the slider. */
+.meter .bar b { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--warn); }
+
+.slider { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; font-size: 0.78rem; color: var(--muted); }
+.slider input { flex: 1; }
+.slider output { font-variant-numeric: tabular-nums; min-width: 3rem; }
+
+/* ── Pickers ──────────────────────────────────────────────────────────── */
+
+.pickers { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-end; margin-top: 0.7rem; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem; }
+.pickers label { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.75rem; color: var(--muted); flex: 1; min-width: 7rem; }
+select, input[type="text"], input:not([type]) {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+
+button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover:not(:disabled) { filter: brightness(1.08); color: #fff; }
+button.danger { color: var(--danger); border-color: #f3c9c9; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.is-armed { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* ── Gloss + sentence ─────────────────────────────────────────────────── */
+
+.row { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 0.5rem; }
+.row h2 { font-size: 0.95rem; margin: 0; }
+.muted { font-size: 0.78rem; color: var(--muted); }
+
+.gloss-strip {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  min-height: 2.6rem;
+  align-items: center;
+  padding: 0.4rem;
+  background: var(--bg);
+  border-radius: 8px;
+}
+.gloss-strip .hint { font-size: 0.82rem; color: var(--muted); padding: 0 0.3rem; }
+.gloss {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.2rem 0.35rem 0.2rem 0.65rem;
+  border-radius: 999px;
+  animation: pop 160ms ease-out;
+}
+.gloss button { border: 0; background: none; padding: 0 0.2rem; color: inherit; opacity: 0.55; font-size: 0.9rem; line-height: 1; }
+.gloss button:hover { opacity: 1; color: var(--danger); }
+@keyframes pop { from { transform: scale(0.85); opacity: 0; } }
+
+.sentence { font-size: 1.25rem; font-weight: 600; min-height: 1.9em; margin: 0.6rem 0; }
+.sentence:empty::before { content: "—"; color: var(--line); }
+
+.actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.checkbox { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--muted); }
+
+.debug { margin-top: 0.8rem; font-size: 0.8rem; }
+.debug summary { cursor: pointer; color: var(--muted); }
+.log { max-height: 11rem; overflow-y: auto; margin: 0.5rem 0 0; padding-left: 1.4rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.log li { margin-bottom: 0.15rem; }
+.log .hit { color: var(--ink); }
+.log .miss { color: var(--warn); }
+
+/* ── Record mode ──────────────────────────────────────────────────────── */
+
+.record-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.8rem; }
+.record-controls input { min-width: 12rem; }
+
+.word-list { list-style: none; margin: 0 0 0.9rem; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.word-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+.word-list .label { font-weight: 600; min-width: 5rem; }
+.word-list .dots { display: flex; gap: 0.2rem; flex: 1; }
+.word-list .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.word-list .dot.weak { background: var(--line); }
+.word-list .count { color: var(--muted); font-size: 0.78rem; }
+
+/* Which semantic gestures the chosen avatar supports. Most avatars support
+   none, and that is invisible without saying so. */
+.motion-note { margin: 0.5rem 0 0; font-size: 0.76rem; color: var(--muted); min-height: 1.1em; }
+.motion-note.is-warn { color: var(--warn); }
+
+
+/* ── Try it without a camera ─────────────────────────────────────────────
+   Sits directly under the avatar because it is the first thing a visitor
+   with no recorded gestures can actually do. See DEMO_PHRASES in app.js. */
+.demo-strip {
+  margin: 0.9rem 0 0;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: #fff;
+}
+.demo-strip h2 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  color: var(--accent);
+}
+.demo-lead {
+  margin: 0 0 0.7rem;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.demo-phrases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.demo-phrase {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.demo-phrase:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.demo-phrase:active { transform: translateY(1px); }

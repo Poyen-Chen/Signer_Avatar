@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signer — Your Gestures, Spoken</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1>Signer</h1>
+        <span class="tagline">your gestures, spoken by a <strong>Perxona avatar</strong> &middot; recognition never leaves this device</span>
+      </div>
+      <nav class="modes" role="tablist" aria-label="Mode">
+        <button id="mode-recognize" class="mode is-active" role="tab" aria-selected="true">Speak</button>
+        <button id="mode-record" class="mode" role="tab" aria-selected="false">Teach gestures</button>
+      </nav>
+      <p id="status-msg" class="status" role="status" aria-live="polite"></p>
+    </header>
+
+    <main class="workspace">
+      <!-- The signer's own view sits outside both modes: recording needs the
+           framing, the motion meter and the capturing badge every bit as much
+           as recognizing does. -->
+      <div class="signer-side">
+        <div class="stage stage-camera">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div id="camera-placeholder" class="placeholder">
+            <p>Camera access is required to see your gestures.</p>
+            <button id="camera-btn" class="primary">Enable camera</button>
+            <p class="fineprint">Video and landmarks never leave this device.</p>
+          </div>
+          <div id="capture-badge" class="capture-badge" hidden>capturing</div>
+          <span id="fps" class="fps-overlay">—</span>
+        </div>
+        <label class="meter">
+          <span>Motion</span>
+          <div class="bar"><i id="energy-fill"></i><b id="energy-threshold"></b></div>
+        </label>
+        <label class="slider">
+          <span title="How far above the measured noise floor movement must rise to count as a gesture.">Sensitivity</span>
+          <input id="sensitivity" type="range" min="1.4" max="3.5" step="0.1" value="2" />
+          <output id="sensitivity-out">2.0×</output>
+        </label>
+      </div>
+
+      <!-- ── Recognize ────────────────────────────────────────────────── -->
+      <section id="recognize-panel" class="mode-panel">
+        <div class="stage stage-avatar">
+          <!-- display:none, not hidden: see hidePresenter() in app.js -->
+          <sv-presenter style="display: none"></sv-presenter>
+          <div id="presenter-placeholder" class="placeholder">
+            <p>Pick an avatar below and launch it. It speaks your gestures aloud.</p>
+          </div>
+        </div>
+        <p id="motion-note" class="motion-note"></p>
+
+        <!-- Try it without a camera. A first-time visitor lands here with no
+             recorded gestures, so without this the avatar has nothing to say
+             and the page looks broken. See DEMO_PHRASES in app.js. -->
+        <section class="demo-strip">
+          <h2>Try the Perxona avatar &mdash; no camera needed</h2>
+          <p class="demo-lead">
+            Press a sentence. The Perxona avatar above speaks it aloud and plays the body
+            gesture that matches its meaning &mdash; the same path a recognized gesture takes.
+          </p>
+          <div id="demo-phrases" class="demo-phrases"></div>
+        </section>
+
+        <div class="composer">
+          <div id="gloss-strip" class="gloss-strip">
+            <span class="hint">Make a gesture — what it says appears here.</span>
+          </div>
+          <p id="sentence-preview" class="sentence"></p>
+          <div class="actions">
+            <button id="speak-btn" class="primary" disabled>Speak it</button>
+            <button id="clear-gloss-btn" class="ghost">Clear</button>
+            <label class="checkbox">
+              <input id="autospeak" type="checkbox" checked />
+              Speak automatically after <span id="autospeak-delay">1.5</span>s of stillness
+            </label>
+          </div>
+        </div>
+
+        <div class="pickers">
+          <label>Avatar<select id="avatar-select"></select></label>
+          <label>Scene<select id="scene-select"></select></label>
+          <label>Voice<select id="voice-select"></select></label>
+          <button id="init-btn" class="primary" disabled>Launch avatar</button>
+        </div>
+
+        <details class="debug">
+          <summary>Recognition log</summary>
+          <ol id="recognition-log" class="log"></ol>
+        </details>
+      </section>
+
+      <!-- ── Record ───────────────────────────────────────────────────── -->
+      <section id="record-panel" class="mode-panel panel" hidden>
+        <div class="row">
+          <h2>Teach gestures</h2>
+          <span class="muted" id="vocab-summary"></span>
+        </div>
+        <p class="muted" style="margin: 0 0 0.7rem">
+          Any gesture you like, and the sentence it should say. It is matched
+          against your own takes, so 3–5 takes each — varying speed and distance
+          — matters more than anything else you can adjust.
+        </p>
+        <div class="record-controls">
+          <input id="word-input" list="suggested-words" placeholder="What it should say, e.g. I need water" />
+          <datalist id="suggested-words"></datalist>
+          <button id="arm-btn" class="primary">Record next take</button>
+          <span id="record-hint" class="muted"></span>
+        </div>
+        <ul id="word-list" class="word-list"></ul>
+        <div class="actions">
+          <button id="export-btn">Export JSON</button>
+          <button id="import-btn">Import JSON</button>
+          <input id="import-file" type="file" accept="application/json" hidden />
+          <button id="clear-vocab-btn" class="danger">Delete all</button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Static build — see the SIGNER_STATIC comment in app.js.
+      window.SIGNER_STATIC = {"visionBundle":"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/vision_bundle.mjs","wasmBase":"https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.0.1/wasm","modelUrl":"https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task","autoLaunch":true};
+    </script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
