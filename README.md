@@ -147,7 +147,7 @@ original Connect Kit sample code, untouched.
 ### Two ways the same code runs
 
 ```mermaid
-flowchart TD
+flowchart LR
     SRC["📁 public/demos/signer/<br/><small>one source, two deployments</small>"]
 
     SRC --> DEV["🖥️ server.mjs<br/><small>localhost:8083</small>"]

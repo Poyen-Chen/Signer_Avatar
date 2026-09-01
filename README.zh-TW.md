@@ -137,7 +137,7 @@ Signer_Avatar/
 ### 同一份程式碼的兩種跑法
 
 ```mermaid
-flowchart TD
+flowchart LR
     SRC["📁 public/demos/signer/<br/><small>一份原始碼，兩種部署</small>"]
 
     SRC --> DEV["🖥️ server.mjs<br/><small>localhost:8083</small>"]
