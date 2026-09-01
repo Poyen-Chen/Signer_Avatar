@@ -162,7 +162,6 @@ Express 伺服器講話。secret key 從頭到尾不離開開發者的機器。
 ```mermaid
 flowchart LR
     subgraph device["On this device (browser) — nothing leaves"]
-        direction LR
         CAM["📷 Camera"] --> MP["MediaPipe Holistic<br/><small>pose 33 · hands 21×2 · WASM, 30 fps</small>"]
         MP --> FE["features.js<br/><small>128-dim, body-relative</small>"]
         FE --> SEG["segment.js<br/><small>adaptive energy threshold</small>"]
